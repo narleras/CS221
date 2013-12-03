@@ -39,11 +39,12 @@ def extractOctaveFeatures(piece, numVoices):
     
     print 'keys', keys
     numFeatures = len(keys)
+    if numFeatures > 12: print 'ERROR'
     keys.sort()
-    sortedFeatures = [0] * numFeatures
-    for i in range(numFeatures):
-        sortedFeatures[i] = features[keys[i]]
-    return sortedFeatures, numFeatures
+    sortedFeatures = [0] * 12
+    for elem in keys:
+        sortedFeatures[int(elem) - 7] = features[elem]
+    return sortedFeatures, 12
 #end extractOctaveFeatures
 
 def extractNoteDuration():
@@ -65,6 +66,7 @@ def extractFeatures(piece, numVoices):
     octaveFeatures, octaveCount = extractOctaveFeatures(piece, numVoices)
     numFeatures += octaveCount
     for elem in octaveFeatures:
+        print elem
         features.append(elem)
     #print 'features', features
     return features, numFeatures
