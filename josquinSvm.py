@@ -216,11 +216,12 @@ def features1():
 
 def features2():
     trainingSet, trainingComposers, numTrainingComposers, numTrainingPieces = loadData.loadTrainingFiles()
-    trainingFeatureVectors = extractFeatures.initFeatureVectors(trainingSet, numTrainingComposers)
+    trainingData = extractFeatures.initFeatureVectors(trainingSet, numTrainingComposers, numTrainingPieces)
 
     testingSet, testingComposers, numTestingComposers, numTestingPieces = loadData.loadTestingFiles()
-    testingFeatureVectors = extractFeatures.initFeatureVectors(testingSet, numTestingComposers)
+    testingFeatureVectors = extractFeatures.initFeatureVectors(testingSet, numTestingComposers, numTestingPieces)
 
+    trainingComposerNames = [0, 1, 2, 3, 4]
     predictions = bench_svm(trainingData, testingData, trainingComposerNames)
 
     printStatistics(predictions, testingComposerNames)
