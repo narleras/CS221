@@ -2,6 +2,7 @@ from time import time
 import numpy as np
 import pylab as pl
 import os, collections, copy, loadData
+import extractFeatures
 
 
 from sklearn import metrics
@@ -9,6 +10,7 @@ from sklearn import svm, datasets
 from sklearn.datasets import load_digits
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import scale
+
 
 
 testingDataPath = '/Users/naroazurutuza/Documents/ATUMN2013/Josquin/JRP_data-20131020/dataTesting/'
@@ -52,90 +54,90 @@ sample_size = 300
 #     return files, composers, numComposers, numPieces
 # #end loadSongFiles
 
-def trimFeatures(features, numComposers):
-    print ''
-    print 'Trimming weight vectors'
-   # removed = [0] * numComposers
-    trimmedFeatures = copy.deepcopy(features)
-    for feature in features:
-        # while len(trimmedWeights[i]) > 50:
-        #     val = min(trimmedWeights[i], key=trimmedWeights[i].get)
-        #     del trimmedWeights[i][val]
-        #     removed[i] += 1
-        #for feature in features[i]:
-        if abs(features[feature]) <= 2:
-            del trimmedFeatures[feature]
-            #removed[i] += 1
-    print ''
-    print 'Finished trimming.... Displaying trimming results'
-    print 'Number of features removed:'
-    #print removed
-    print 'Length of weight vectors before trimming:'
-    print [len(features)]
-    print 'Length of weight vectors after trimming:'
-    print [len(trimmedFeatures)]
-    print ''
-    return trimmedFeatures
-#end trimWeights
-
-
-def extractSequenceFeatures(piece, K, numVoices):
-    sequenceFeatures = collections.defaultdict(int)
-    row, col = piece.shape
-    for voiceIndex in range(numVoices):
-        voice = 5 + 4 * voiceIndex
-        for note in range(1,row-K+1):
-            if piece[note][voice] != 0:
-                sequence = list()
-                for i in range(K):
-                    sequence.append(str(int(piece[note+i][voice])))
-                stringSeq = ''.join(sequence)
-                sequenceFeatures[stringSeq] = sequenceFeatures[stringSeq] + 1
-    return sequenceFeatures
-#end extractSequenceFeatures
-
-def extractIntervalFeatures(piece, numVoices):
-    intervalFeatures = collections.defaultdict(int)
-    row, col = piece.shape
-    for voiceIndex in range(numVoices):
-        voice = 5 + 4 * voiceIndex
-        for note in range(1,row):
-            if piece[note][voice] != 0:
-                nextNote = piece[note][voice+3]
-                if nextNote != 0 and nextNote != -1:
-                    interval = str(int(piece[nextNote][voice] - piece[note][voice]))
-                    intervalFeatures[interval] = intervalFeatures[interval] + 1
-    return intervalFeatures
-#end extractIntervalFeatures
-     
-def extractFeatures(piece, K, numVoices):    
-    features = {}
-    sequenceFeatures = extractSequenceFeatures(piece, K, numVoices)
-    intervalFeatures = extractIntervalFeatures(piece, numVoices)
-    features.update(sequenceFeatures)
-    features.update(intervalFeatures)
-    return features
-#end extractFeatures 
-# function initFeatures
-#   @param K - sequence lengths for extraction
-#   @param trainingSongs - list of songs in training set
-#   @param numComposers - number of composers in training set  
+#def trimFeatures(features, numComposers):
+#    print ''
+#    print 'Trimming weight vectors'
+#   # removed = [0] * numComposers
+#    trimmedFeatures = copy.deepcopy(features)
+#    for feature in features:
+#        # while len(trimmedWeights[i]) > 50:
+#        #     val = min(trimmedWeights[i], key=trimmedWeights[i].get)
+#        #     del trimmedWeights[i][val]
+#        #     removed[i] += 1
+#        #for feature in features[i]:
+#        if abs(features[feature]) <= 2:
+#            del trimmedFeatures[feature]
+#            #removed[i] += 1
+#    print ''
+#    print 'Finished trimming.... Displaying trimming results'
+#    print 'Number of features removed:'
+#    #print removed
+#    print 'Length of weight vectors before trimming:'
+#    print [len(features)]
+#    print 'Length of weight vectors after trimming:'
+#    print [len(trimmedFeatures)]
+#    print ''
+#    return trimmedFeatures
+##end trimWeights
 #
-# @return list of (composer, feature vector, num Voices) tuples
 #
-# Usage: should be called from train to store feature vectors in memory
-def initFeatureVectors(K, trainingSongs, numComposers):
-    featureVectors = []
-    featureNames = collections.defaultdict(int)
-    composerNames = []
-    for composer, piece, numVoices in trainingSongs:
-        features = extractFeatures(piece, K, numVoices)
-        trimmedFeatures = trimFeatures(features, numComposers)
-        composerNames.append(composer)
-        for key in trimmedFeatures:
-            featureNames[key] += 1
-        featureVectors.append(trimmedFeatures)
-    return featureVectors, featureNames, composerNames
+#def extractSequenceFeatures(piece, K, numVoices):
+#    sequenceFeatures = collections.defaultdict(int)
+#    row, col = piece.shape
+#    for voiceIndex in range(numVoices):
+#        voice = 5 + 4 * voiceIndex
+#        for note in range(1,row-K+1):
+#            if piece[note][voice] != 0:
+#                sequence = list()
+#                for i in range(K):
+#                    sequence.append(str(int(piece[note+i][voice])))
+#                stringSeq = ''.join(sequence)
+#                sequenceFeatures[stringSeq] = sequenceFeatures[stringSeq] + 1
+#    return sequenceFeatures
+##end extractSequenceFeatures
+#
+#def extractIntervalFeatures(piece, numVoices):
+#    intervalFeatures = collections.defaultdict(int)
+#    row, col = piece.shape
+#    for voiceIndex in range(numVoices):
+#        voice = 5 + 4 * voiceIndex
+#        for note in range(1,row):
+#            if piece[note][voice] != 0:
+#                nextNote = piece[note][voice+3]
+#                if nextNote != 0 and nextNote != -1:
+#                    interval = str(int(piece[nextNote][voice] - piece[note][voice]))
+#                    intervalFeatures[interval] = intervalFeatures[interval] + 1
+#    return intervalFeatures
+##end extractIntervalFeatures
+#     
+#def extractFeatures(piece, K, numVoices):    
+#    features = {}
+#    sequenceFeatures = extractSequenceFeatures(piece, K, numVoices)
+#    intervalFeatures = extractIntervalFeatures(piece, numVoices)
+#    features.update(sequenceFeatures)
+#    features.update(intervalFeatures)
+#    return features
+##end extractFeatures 
+## function initFeatures
+##   @param K - sequence lengths for extraction
+##   @param trainingSongs - list of songs in training set
+##   @param numComposers - number of composers in training set  
+##
+## @return list of (composer, feature vector, num Voices) tuples
+##
+## Usage: should be called from train to store feature vectors in memory
+#def initFeatureVectors(K, trainingSongs, numComposers):
+#    featureVectors = []
+#    featureNames = collections.defaultdict(int)
+#    composerNames = []
+#    for composer, piece, numVoices in trainingSongs:
+#        features = extractFeatures(piece, K, numVoices)
+#        trimmedFeatures = trimFeatures(features, numComposers)
+#        composerNames.append(composer)
+#        for key in trimmedFeatures:
+#            featureNames[key] += 1
+#        featureVectors.append(trimmedFeatures)
+#    return featureVectors, featureNames, composerNames
 #end initFeatureVectors
 
 #def convertDictToMatrix(dictionary, labelNames):   
@@ -165,30 +167,42 @@ def bench_svm(trainingData, testingData, labels):
 #end bench_k_means
 
 def printStatistics(predictions, composerNames):
-    statistics = np.zeros([5, 5])
+    #statistics = np.zeros((5, 5))
+    correct = np.zeros(5)
+    incorrect = np.zeros(5)
+    total = np.zeros(5)
     for index in range(len(predictions)):
-        statistics[predictions[index]][composerNames[index]] += 1
+        print predictions[index], composerNames[index]
+        #statistics[predictions[index]][composerNames[index]] += 1
+        total[composerNames[index]] += 1
+        if composerNames[index] == predictions[index]:
+            correct[composerNames[index]] += 1
+        else:
+            incorrect[composerNames[index]] += 1
     
+    for index in range(5):
+        print 'Correct', index, ': ', correct[index], 'out of ', total[index]
+        print 'Error', index, ': ', incorrect[index]/total[index]
     #m, n = statistics.shape()
-    for row in range(5):
-        print 'statistics for cluster', row
-        for column in range(5):
-            print column, statistics[row][column]
-    for column in range(5):
-        sum = 0
-        for row in range(5):
-            sum += statistics[row][column]
-        print 'total',column,':', sum
+    #for row in range(5):
+    #    print 'statistics for cluster', row
+    #    for column in range(5):
+    #        print column, statistics[row][column]
+    #for column in range(5):
+    #    sum = 0
+    #    for row in range(5):
+    #        sum += statistics[row][column]
+    #    print 'total',column,':', sum
 
 #end printStatistics
 
 def features1():
 
     trainingSet, trainingComposers, numTrainingComposers, numTrainingPieces = loadData.loadTrainingFiles()
-    trainingFeatureVectors, trainingFeatureNames, trainingComposerNames = initFeatureVectors(4, trainingSet, len(labels)+1)
+    trainingFeatureVectors, trainingFeatureNames, trainingComposerNames = extractFeatures.initFeatureVectors(4, trainingSet, len(labels)+1)
 
     testingSet, testingComposers, numTestingComposers, numTestingPieces = loadData.loadTestingFiles()
-    testingFeatureVectors, testingFeatureNames, testingComposerNames = initFeatureVectors(4, testingSet, len(labels)+1)
+    testingFeatureVectors, testingFeatureNames, testingComposerNames = extractFeatures.initFeatureVectors(4, testingSet, len(labels)+1)
 
     nameList = list()
     for name in trainingFeatureNames:
@@ -216,13 +230,14 @@ def features1():
 
 def features2():
     trainingSet, trainingComposers, numTrainingComposers, numTrainingPieces = loadData.loadTrainingFiles()
-    trainingData = extractFeatures.initFeatureVectors(trainingSet, numTrainingComposers, numTrainingPieces)
+    trainingData, trainingComposerNames = extractFeatures.initFeatureVectors(trainingSet, numTrainingComposers, numTrainingPieces)
 
     testingSet, testingComposers, numTestingComposers, numTestingPieces = loadData.loadTestingFiles()
-    testingFeatureVectors = extractFeatures.initFeatureVectors(testingSet, numTestingComposers, numTestingPieces)
+    testingFeatureVectors, testingComposerNames = extractFeatures.initFeatureVectors(testingSet, numTestingComposers, numTestingPieces)
 
-    trainingComposerNames = [0, 1, 2, 3, 4]
-    predictions = bench_svm(trainingData, testingData, trainingComposerNames)
+    #trainingComposerNames = [0, 1, 2, 3, 4]
+    #testingComposerNames = [0, 1, 2, 3, 4]
+    predictions = bench_svm(trainingData, testingFeatureVectors, trainingComposerNames)
 
     printStatistics(predictions, testingComposerNames)
 
