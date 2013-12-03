@@ -37,11 +37,12 @@ def extractPitchGradient():
     return []
 #end extractPitchGradient
 
-def extractFeatures(piece, K, numVoices):   
+def extractFeatures(piece, numVoices):   
     features = []
     pitchFeatures, numNotes = extractPitch(piece, numVoices)
-    features.update(sequenceFeatures)
-    features.update(intervalFeatures)
+    for elem in pitchFeatures:
+        features.append(elem)
+    features.append(numNotes)
     return features
 #end extractFeatures 
 
@@ -53,13 +54,16 @@ def extractFeatures(piece, K, numVoices):
 # @return list of (composer, feature vector, num Voices) tuples
 #
 # Usage: should be called from train to store feature vectors in memory
-def initFeatureVectors(trainingSongs, numComposers):
+def initFeatureVectors(trainingSongs, numComposers, numTrainingPieces):
     print ''
     print 'Extracting features...' 
-    featureVectors = []
+    numFeatures = 13
+    featureVector = np.zeros(numTrainingPieces, numFeatures)
+    currPiece = 0
     for composer, piece, numVoices in trainingSongs:
-        features = extractFeatures(piece, K, numVoices)
-        featureVectors.append((composer, features, numVoices))
+        features = extractFeatures(piece, numVoices)
+        for i in range(numFeatures):
+            featureVector[currPiece][i] = features[i]
     print 'Finished feature extraction'
     print ''
     return featureVectors
