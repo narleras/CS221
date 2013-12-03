@@ -5,7 +5,7 @@
 #    Pitch features
 #    Number of notes
 import numpy as np
-import math
+import math, collections
 
 def extractPitchAndNoteCount(piece, numVoices):
     features = [0.0] * 12
@@ -14,7 +14,7 @@ def extractPitchAndNoteCount(piece, numVoices):
     for voiceIndex in range(numVoices):
         voice = 5 + 4 * voiceIndex
         for r in range(numRows):
-            note = (int)piece[r][voice]
+            note = (int)(piece[r][voice])
             if note <= 0: continue
             pitch = note % 12
             numNotes += 1
@@ -24,17 +24,20 @@ def extractPitchAndNoteCount(piece, numVoices):
     return features, numNotes, 13
 #end extractPitch
 
-def extractOctaveFeatures():
+def extractOctaveFeatures(piece, numVoices):
     features = collections.defaultdict(int)
     numRows, numCols = piece.shape
     for voiceIndex in range(numVoices):
         voice = 5 + 4 * voiceIndex
         for r in range(numRows):
-            note = (int)piece[r][voice]
+            note = (int)(piece[r][voice])
             if note <= 0: continue
             octave = math.floor(note / 12)
             features[octave] += 1
-    keys = features.viewkeys()
+    keys = list(features.viewkeys())
+    #keys = [0]*len(features)
+    
+    print 'keys', keys
     numFeatures = len(keys)
     keys.sort()
     sortedFeatures = [0] * numFeatures
@@ -63,6 +66,7 @@ def extractFeatures(piece, numVoices):
     numFeatures += octaveCount
     for elem in octaveFeatures:
         features.append(elem)
+    #print 'features', features
     return features, numFeatures
 #end extractFeatures 
 
@@ -77,15 +81,17 @@ def extractFeatures(piece, numVoices):
 def initFeatureVectors(trainingSongs, numComposers, numTrainingPieces):
     print ''
     print 'Extracting features...' 
-    numFeatures = 13
-    featureVector = np.zeros((numTrainingPieces, numFeatures))
+    #numFeatures = 13
+    featureVector = []
     composers = np.zeros(numTrainingPieces)
     currPiece = 0
     for composer, piece, numVoices in trainingSongs:
         composers[currPiece] = (int)(composer)
-        features = extractFeatures(piece, numVoices)
+        features, numFeatures = extractFeatures(piece, numVoices)
+        if not len(featureVector):
+            featureVector = np.zeros((numTrainingPieces, numFeatures))
         for i in range(numFeatures):
-            featureVector[currPiece][i] = (int)(features[i])
+            featureVector[currPiece][i] = features[i]
         currPiece += 1
     print 'Finished feature extraction'
     print ''
