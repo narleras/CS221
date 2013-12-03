@@ -5,31 +5,43 @@
 #    Pitch features
 #    Number of notes
 import numpy as np
+import math
 
-def extractPitch(piece, numVoices):
+def extractPitchAndNoteCount(piece, numVoices):
     features = [0.0] * 12
     numRows, numCols = piece.shape
     numNotes = 0
     for voiceIndex in range(numVoices):
         voice = 5 + 4 * voiceIndex
         for r in range(numRows):
-            note = piece[r][voice]
+            note = (int)piece[r][voice]
             if note <= 0: continue
-            pitch = (int)(note % 12)
+            pitch = note % 12
             numNotes += 1
             features[pitch] += 1
     for i in range(len(features)):
         features[i] /= numNotes
-    return features, numNotes
+    return features, numNotes, 13
 #end extractPitch
 
 def extractOctaveFeatures():
-    return []
+    features = collections.defaultdict(int)
+    numRows, numCols = piece.shape
+    for voiceIndex in range(numVoices):
+        voice = 5 + 4 * voiceIndex
+        for r in range(numRows):
+            note = (int)piece[r][voice]
+            if note <= 0: continue
+            octave = math.floor(note / 12)
+            features[octave] += 1
+    keys = features.viewkeys()
+    numFeatures = len(keys)
+    keys.sort()
+    sortedFeatures = [0] * numFeatures
+    for i in range(numFeatures):
+        sortedFeatures[i] = features[keys[i]]
+    return sortedFeatures, numFeatures
 #end extractOctaveFeatures
-
-def extractNoteCount():
-    return []
-#end extractNoteCount
 
 def extractNoteDuration():
     return []
@@ -41,11 +53,17 @@ def extractPitchGradient():
 
 def extractFeatures(piece, numVoices):   
     features = []
-    pitchFeatures, numNotes = extractPitch(piece, numVoices)
+    numFeatures = 0
+    pitchFeatures, numNotes, pitchCount = extractPitchAndNoteCount(piece, numVoices)
+    numFeatures += pitchCount
     for elem in pitchFeatures:
         features.append(elem)
     features.append(numNotes)
-    return features
+    octaveFeatures, octaveCount = extractOctaveFeatures(piece, numVoices)
+    numFeatures += octaveCount
+    for elem in octaveFeatures:
+        features.append(elem)
+    return features, numFeatures
 #end extractFeatures 
 
 # function initFeatureVectors
