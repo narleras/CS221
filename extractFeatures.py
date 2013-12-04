@@ -8,7 +8,7 @@ import numpy as np
 import math, collections
 
 def extractPitchAndNoteCount(piece, numVoices):
-    features = [0.0] * 12
+    features = [0.0] * 40
     numRows, numCols = piece.shape
     numNotes = 0
     for voiceIndex in range(numVoices):
@@ -16,12 +16,12 @@ def extractPitchAndNoteCount(piece, numVoices):
         for r in range(numRows):
             note = (int)(piece[r][voice])
             if note <= 0: continue
-            pitch = note % 12
+            pitch = note % 40
             numNotes += 1
             features[pitch] += 1
     for i in range(len(features)):
         features[i] /= numNotes
-    return features, numNotes, 13
+    return features, numNotes, 41
 #end extractPitch
 
 def extractOctaveFeatures(piece, numVoices):
@@ -32,27 +32,92 @@ def extractOctaveFeatures(piece, numVoices):
         for r in range(numRows):
             note = (int)(piece[r][voice])
             if note <= 0: continue
-            octave = math.floor(note / 12)
+            octave = math.floor(note / 40)
             features[octave] += 1
     keys = list(features.viewkeys())
-    #keys = [0]*len(features)
-    
-    print 'keys', keys
     numFeatures = len(keys)
-    if numFeatures > 13: print 'ERROR'
     keys.sort()
-    sortedFeatures = [0] * 13
+    sortedFeatures = [0] * 4
     for elem in keys:
-        sortedFeatures[int(elem) - 7] = features[elem]
-    return sortedFeatures, 13
+        sortedFeatures[int(elem) - 2] = features[elem]
+    return sortedFeatures, 4
 #end extractOctaveFeatures
 
-def extractNoteDuration():
-    return []
+def extractNoteDuration(piece, numVoices):
+    features = []
+    vals = []
+    variance = []
+    numRows, numCols = piece.shape
+    prevNote = 0
+    numNotes = 0
+    duration = 0
+    total = 0
+    maxLen = 0
+    for voiceIndex in range(numVoices):
+        voice = 5 + 4 * voiceIndex
+        for r in range(numRows):
+            note = int(piece[r][voice])
+            if note == 0: 
+                duration = 0
+                prevNote = 0
+                continue
+            if note > 0:
+                if prevNote < 0:
+                    total += duration
+                    if duration > maxLen:
+                        maxLen = duration
+                    vals.append(duration)
+                numNotes += 1
+                duration = 1
+                prevNote = -1
+            if note < 0:
+                duration += 1
+                prevNote = -1
+    mean = float(total)/numNotes
+    features.append(mean)
+    for val in vals:
+        variance.append((val - mean)**2)
+    var = sum(variance) / len(variance)
+    features.append(var)
+    print features
+    return features, 2
 #end extractNoteDuration
 
-def extractPitchGradient():
-    return []
+def extractPitchGradient(piece, numVoices):
+    features = []
+    vals = []
+    variance = []
+    numRows, numCols = piece.shape
+    validPrevNote = False
+    prevNotePitch = 0
+    for voiceIndex in range(numVoices):
+        voice = 5 + 4 * voiceIndex
+        for r in range(numRows):
+            note = int(piece[r][voice])
+            pitch = note % 40
+            if note < 0:
+                #do something else
+                continue
+            elif note == 0:
+                validPrevNote = False
+            elif validPrevNote == False:
+                prevNotePitch = pitch
+                validPrevNote = True
+            else:
+                grad = pitch - prevNotePitch
+                if grad > 0:
+                    grad = 1
+                elif grad < 0:
+                    grad = -1
+                vals.append(grad)
+    mean = float(sum(vals)) / len(vals)
+    for elem in vals:
+        variance.append((elem - mean)**2)
+    var = sum(variance) / len(variance)
+    features.append(mean)
+    features.append(var)
+    print features
+    return features, 2
 #end extractPitchGradient
 
 def extractFeatures(piece, numVoices):   
@@ -66,9 +131,15 @@ def extractFeatures(piece, numVoices):
     octaveFeatures, octaveCount = extractOctaveFeatures(piece, numVoices)
     numFeatures += octaveCount
     for elem in octaveFeatures:
-        print elem
         features.append(elem)
-    #print 'features', features
+    lenFeatures, num = extractNoteDuration(piece, numVoices)
+    numFeatures += num
+    for elem in lenFeatures:
+        features.append(elem)
+    gradFeatures, numGrad = extractPitchGradient(piece, numVoices)
+    numFeatures += numGrad
+    for elem in gradFeatures:
+        features.append(elem)
     return features, numFeatures
 #end extractFeatures 
 
