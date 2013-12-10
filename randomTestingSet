@@ -1,0 +1,20 @@
+def features2():
+    #load data
+    dataSet, dataComposers, numTrainingComposers, numDataPieces = loadData.loadTrainingFiles()
+    data, composerNames = extractFeatures.initFeatureVectors(dataSet, numTrainingComposers, numDataPieces)
+    
+    # split into a training and testing set
+    trainingSet, testingSet, trainingComposerNames, testingComposerNames = train_test_split(data, composerNames, test_size=0.20)
+    
+    print 'training', len(trainingSet), len(trainingComposerNames), 'testing', len(testingSet), len(testingComposerNames)
+    #make predictions
+    predictions = bench_svm(trainingSet, testingSet, trainingComposerNames)
+    
+    reducedTrainingSet, reducedTestingSet = dimReduction(2, trainingSet, testingSet, trainingComposerNames, testingComposerNames)
+
+    printStatistics(predictions, testingComposerNames)
+    #plotData(reducedTrainingSet, trainingComposerNames, [0, 1, 2, 3, 4])
+    plotFeatureData(trainingSet[:, 1], trainingComposerNames, [0, 1, 2, 3, 4])
+
+#Main body of code
+features2()
